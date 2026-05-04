@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { auth, db } from '../firebaseConfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, collection, addDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 
 export default function Register() {
@@ -10,8 +10,6 @@ export default function Register() {
   const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
   const [birthdate, setBirthdate] = useState('');
-  const [phone, setPhone] = useState(''); // Novo dado: Telefone
-  const [city, setCity] = useState(''); // Novo dado: Cidade
   const [error, setError] = useState('');
   
   const navigate = useNavigate();
@@ -20,11 +18,9 @@ export default function Register() {
     e.preventDefault();
     setError('');
     try {
-      // Cria usuário no Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // 1. Tabela Mestre: users
       await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
         name,
@@ -32,23 +28,6 @@ export default function Register() {
         birthdate,
         email
       });
-
-      // 2. Simulação de 4NF: Separando atributos multivalorados e independentes
-      // Tabela: user_phones
-      if (phone) {
-        await addDoc(collection(db, 'user_phones'), {
-          uid: user.uid,
-          phoneNumber: phone
-        });
-      }
-
-      // Tabela: user_addresses
-      if (city) {
-        await addDoc(collection(db, 'user_addresses'), {
-          uid: user.uid,
-          city: city
-        });
-      }
 
       alert('Usuário cadastrado com sucesso!');
       navigate('/login');
@@ -61,87 +40,52 @@ export default function Register() {
     <div className="standalone-page">
       <div className="page-container">
         <h2 className="page-title">Cadastro</h2>
-      {error && <div className="error-msg">{error}</div>}
-      
-      <form onSubmit={handleRegister} className="form-group">
-        <input 
-          type="text" 
-          placeholder="Nome" 
-          required 
-          value={name} 
-          onChange={e => setName(e.target.value)} 
-          className="input-field"
-        />
-        <input 
-          type="text" 
-          placeholder="Sobrenome" 
-          required 
-          value={surname} 
-          onChange={e => setSurname(e.target.value)} 
-          className="input-field"
-        />
-        <input 
-          type="date" 
-          required 
-          value={birthdate} 
-          onChange={e => setBirthdate(e.target.value)} 
-          className="input-field"
-        />
+        {error && <div className="error-msg">{error}</div>}
         
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <select 
-            className="input-field" 
-            style={{ width: '80px', padding: '14px 10px' }}
-            title="DDI (Código do País)"
-          >
-            <option value="+55">+55</option>
-            <option value="+1">+1</option>
-            <option value="+351">+351</option>
-          </select>
+        <form onSubmit={handleRegister} className="form-group">
           <input 
-            type="tel" 
-            placeholder="(DDD) 90000-0000" 
-            value={phone} 
-            onChange={e => {
-              // Máscara simples para formato BR
-              let val = e.target.value.replace(/\D/g, "");
-              if (val.length > 2) val = "(" + val.substring(0,2) + ") " + val.substring(2);
-              if (val.length > 10) val = val.substring(0,10) + "-" + val.substring(10,14);
-              setPhone(val);
-            }} 
+            type="text" 
+            placeholder="Nome" 
+            required 
+            value={name} 
+            onChange={e => setName(e.target.value)} 
             className="input-field"
-            style={{ flex: 1 }}
-            maxLength={15}
           />
-        </div>
-
-        <input 
-          type="text" 
-          placeholder="Cidade" 
-          value={city} 
-          onChange={e => setCity(e.target.value)} 
-          className="input-field"
-        />
-        <input 
-          type="email" 
-          placeholder="E-mail" 
-          required 
-          value={email} 
-          onChange={e => setEmail(e.target.value)} 
-          className="input-field"
-        />
-        <input 
-          type="password" 
-          placeholder="Senha" 
-          required 
-          value={password} 
-          onChange={e => setPassword(e.target.value)} 
-          className="input-field"
-        />
-        <button type="submit" className="btn-primary">Cadastrar</button>
-      </form>
-      
-      <Link to="/login" className="link-text">Já tem uma conta? Faça Login</Link>
+          <input 
+            type="text" 
+            placeholder="Sobrenome" 
+            required 
+            value={surname} 
+            onChange={e => setSurname(e.target.value)} 
+            className="input-field"
+          />
+          <input 
+            type="date" 
+            required 
+            value={birthdate} 
+            onChange={e => setBirthdate(e.target.value)} 
+            className="input-field"
+          />
+          <input 
+            type="email" 
+            placeholder="E-mail" 
+            required 
+            value={email} 
+            onChange={e => setEmail(e.target.value)} 
+            className="input-field"
+          />
+          <input 
+            type="password" 
+            placeholder="Senha" 
+            required 
+            value={password} 
+            onChange={e => setPassword(e.target.value)} 
+            className="input-field"
+          />
+          <button type="submit" className="btn-primary">Cadastrar</button>
+        </form>
+        
+        <Link to="/login" className="link-text">Já tem uma conta? Faça Login</Link>
       </div>
     </div>
   );
